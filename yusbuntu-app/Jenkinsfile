@@ -1,0 +1,50 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = 'dockeryu853/prod-yu:1.1' 
+        CONTAINER_NAME = 'yusuf-container'
+    }
+
+    stages {
+        stage('Pull Docker Image') {
+            steps {
+                script {
+                    echo "Pulling Docker image ${DOCKER_IMAGE}"
+                    sh "docker pull ${DOCKER_IMAGE}"
+                }
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                script {
+                    echo "Running Docker container ${CONTAINER_NAME}"
+                    sh "docker run -d --name ${CONTAINER_NAME} ${DOCKER_IMAGE}"
+                }
+            }
+        }
+
+        stage('Get Container Info') {
+            steps {
+                script {
+                    echo "Getting container info for ${CONTAINER_NAME}"
+                    sh "docker ps -a"
+                    sh "docker inspect ${CONTAINER_NAME}"
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                echo "Cleaning up Docker container and images"
+                sh "docker stop ${CONTAINER_NAME} || true"
+                sh "docker rm ${CONTAINER_NAME} || true"
+                sh "docker rmi ${DOCKER_IMAGE} || true"
+            }
+        }
+    }
+}
+
